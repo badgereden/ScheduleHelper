@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <option>
+    <item key="ClassCount" value="23" description="班级数目"/>
+    <item key="DayPerWeek" value="6" description="每周安排课程的天数"/>
+    <item key="LessonPerMorning" value="1" description="早自习节数"/>
+    <item key="LessonPerDay" value="6" description="一天安排的课程总数"/>
+    <item key="LessonPerForenoon" value="4" description="上午安排的课时数"/>
+    <item key="LessonPerNight" value="2"  description="晚自习安排的节数"/>
+  </option>
+  <runtime>
+    <item key="PopulationSize" value="100" description="种群规模"/>
+    <item key="TotalEvolveTime" value="1000" description="进化的总代数"/>
+    <item key="MutateRate" value="60" description="变异的概率百分比"/>
+    <item key="CrossRate" value="60" description="交叉的概率百分比"/>
+    
+  </runtime>
+</config>

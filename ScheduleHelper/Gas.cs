@@ -414,7 +414,11 @@ namespace ScheduleHelper
         /// <summary>
         /// 获取种群的平均适应度
         /// </summary>
+
         public int FitnessAvg { get; private set; }
+
+       // public bool Cancel { get; set; }
+
         public EvolvedArgs(int currentTimes, int fitnessMax, int fitnessMin, int fitnessSum, int fitnessAvg)
         {
             CurrentTimes = currentTimes;

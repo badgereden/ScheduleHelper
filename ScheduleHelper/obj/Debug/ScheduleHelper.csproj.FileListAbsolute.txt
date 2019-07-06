@@ -130,3 +130,6 @@ E:\Github\ScheduleHelper20170901\ScheduleHelper\obj\Debug\ScheduleHelper.pdb
 E:\Github\ScheduleHelper\ScheduleHelper\obj\Debug\ScheduleHelper.csproj.CoreCompileInputs.cache
 E:\Github\ScheduleHelper\ScheduleHelper\obj\Debug\ScheduleHelper.csprojAssemblyReference.cache
 E:\Github\ScheduleHelper\ScheduleHelper\obj\Debug\ScheduleHelper.csproj.CopyComplete
+E:\Github\ScheduleHelper\ScheduleHelper\bin\Debug\INIFileParser.dll
+E:\Github\ScheduleHelper\ScheduleHelper\bin\Debug\INIFileParser.xml
+E:\Github\ScheduleHelper\ScheduleHelper\bin\Debug\System.Data.SQLite.dll.config

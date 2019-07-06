@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
-
 namespace ScheduleHelper
 {
     static class Global
@@ -14,47 +13,66 @@ namespace ScheduleHelper
         private static TeacherCollection _gradeTeacher;
         private static GradeClassMaster _gradeClassMaster;
 
-        private static int _classCount;
+        //private static int _classCount;
         private static bool _dirty;
         private static bool _empty;
 
         static Global()
         {
             Random = new Random();
-            _classCount = StaticSQLiteHelper.GetClassCount();
-            //------------------------------设置运行参数-----------------------------------
-            //运行参数
+            //_classCount = StaticSQLiteHelper.GetClassCount();
+            ////------------------------------设置运行参数-----------------------------------
+            ////运行参数
 
-            PopulationSize = 100;    //种群规模
+            //PopulationSize = 100;    //种群规模
 
-            TotalFitness = PopulationSize * (PopulationSize + 1) / 2;   //种群的总适应度之和.
+            //TotalFitness = PopulationSize * (PopulationSize + 1) / 2;   //种群的总适应度之和.
 
-            TotalEvolveTime = 1000;      //进化的总代数,进化到这么多代后退出
+            //TotalEvolveTime = 1000;      //进化的总代数,进化到这么多代后退出
 
-            MutateRate = 60;            //变异概率
+            //MutateRate = 60;            //变异概率
 
-            CrossRate = 10;             //交叉概率
+            //CrossRate = 10;             //交叉概率
 
-            //--------------------------运行参数设置,请勿随意设置--------------------------------
+            ////--------------------------运行参数设置,请勿随意设置--------------------------------
 
-                DayPerWeek = 6;                 //每周上课的天数
+            //    DayPerWeek = 6;                 //每周上课的天数
 
-                LessonPerMorning = 1;
+            //    LessonPerMorning = 1;
 
-                LessonPerDay = 6;               //每天安排的节数
+            //    LessonPerDay = 6;               //每天安排的节数
 
-                LessonPerForenoon = 4;          //上午安排的节数
+            //    LessonPerForenoon = 4;          //上午安排的节数
 
-                LessonPerNight = 2;     //晚自习安排的节数
+            //    LessonPerNight = 2;     //晚自习安排的节数
 
-            //-------------------------------------------------------------------------------------
-                if (!_empty)
-                {
-                    LoadGradTeachers();             //加载全年级教师信息
-                    LoadGradeSubjectSetting();      //加载全年级的课程设置要求
-                    LoadGradeClassMaster();         //加载全年级的班主任列表
-                    _dirty = false;
-                }
+            ////-------------------------------------------------------------------------------------
+            //    if (!_empty)
+            //    {
+            //        LoadGradTeachers();             //加载全年级教师信息
+            //        LoadGradeSubjectSetting();      //加载全年级的课程设置要求
+            //        LoadGradeClassMaster();         //加载全年级的班主任列表
+            //        _dirty = false;
+            //    }
+
+            ReadConfig();
+            LoadGradTeachers();             //加载全年级教师信息
+            LoadGradeSubjectSetting();      //加载全年级的课程设置要求
+            LoadGradeClassMaster();         //加载全年级的班主任列表
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         }
         /// <summary>
         /// 是否为空
@@ -77,17 +95,47 @@ namespace ScheduleHelper
         /// </summary>
         public static int ClassCount
         {
-            get 
-            {
-                if (_dirty)
-                {
-                    _classCount = StaticSQLiteHelper.GetClassCount();
-                    _dirty = false; //清除标记
-                }
-                return _classCount;
-            }
+            get;
+            set;
         
         }
+
+        public static void ReadConfig()
+        {
+            //读取配置
+            var parser = new IniParser.FileIniDataParser();
+            var data = parser.ReadFile(".\\config.ini");
+
+            //加载配置
+            ClassCount = int.Parse(data["option"]["ClassCount"]);
+
+            DayPerWeek = int.Parse(data["option"]["DayPerWeek"]);
+
+            LessonPerMorning = int.Parse(data["option"]["LessonPerMorning"]);
+
+            LessonPerDay = int.Parse(data["option"]["LessonPerDay"]);
+
+            LessonPerForenoon = int.Parse(data["option"]["LessonPerForenoon"]);
+
+            LessonPerNight = int.Parse(data["option"]["LessonPerNight"]);
+
+            PopulationSize = int.Parse(data["runtime"]["PopulationSize"]);
+
+            TotalFitness = PopulationSize * (PopulationSize + 1) / 2;
+
+            TotalEvolveTime = int.Parse(data["runtime"]["TotalEvolveTime"]);
+
+            MutateRate = int.Parse(data["runtime"]["MutateRate"]);
+
+            CrossRate = int.Parse(data["runtime"]["CrossRate"]);
+
+        }
+
+
+
+
+
+
 
         //---------------------以下两个参数由高级管理员设置,一般用户最好别调整--------------
         /// <summary>
@@ -226,8 +274,8 @@ namespace ScheduleHelper
         public static void LoadGradeSubjectSetting()
         {
             DataTable dt;
-            _gradeSubjectSetting = new GradeSubjectSetting(_classCount);
-            for (int i = 0; i <= _classCount; i++)
+            _gradeSubjectSetting = new GradeSubjectSetting(ClassCount);
+            for (int i = 0; i <= ClassCount; i++)
             {
                 dt = StaticSQLiteHelper.GetClassSubjectSetting(i);
                 ClassSubjectSettingCollection cssc = new ClassSubjectSettingCollection(dt.Rows.Count);
