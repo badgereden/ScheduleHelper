@@ -1,0 +1,429 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<query>
+  <item>
+    <name>查询第四节课的次数</name>
+    <description>防止个别教师第四节课太多</description>
+    <sql>
+      <![CDATA[
+            select t.教师姓名,r.次数 from (
+      select max(teacher_id) as teacher_id, count(*) 次数 from schedule where section=3 group by teacher_id) as r inner join teacher as t
+      on t.教师编号=r.teacher_id
+      order by r."次数" desc;
+      ]]>
+    </sql>
+  </item>  
+  <item>
+    <name>查询课程不在同一个半天的教师</name>
+    <description>防止个别教师出现多次课程不在同一个半天</description>
+    <sql>
+      <![CDATA[
+      SELECT
+	r.dow+1 as 星期,
+	t.教师姓名 教师,
+	r.forenoon 上午,
+	r.afternoon 下午
+FROM
+	(
+		SELECT
+			max(day_of_week) dow,
+			max(teacher_id) ti,
+			count(forenoon) forenoon,
+			count(afternoon) afternoon
+		FROM
+			(
+				SELECT
+					day_of_week,
+					teacher_id,
+					CASE
+				WHEN section < 4 THEN
+					1
+				END AS forenoon,
+				CASE
+			WHEN section >= 4 THEN
+				1
+			END AS afternoon
+			FROM
+				schedule
+			) AS s
+		GROUP BY
+			day_of_week,
+			teacher_id
+		HAVING
+			count(forenoon) > 0
+		AND count(afternoon) > 0
+	) AS r
+INNER JOIN teacher AS t ON r.ti = t."教师编号"
+ORDER BY
+	r.ti;
+      ]]>
+    </sql>
+  </item>
+  <item>
+    <name>查询班级一天有两节相同课程的天数</name>
+    <description>防止有相同课程的天数超过6</description>
+    <sql>
+      <![CDATA[select max(class_id) as 班级,count(*) 天数 from (
+	select max(class_id) class_id,max(day_of_week) day_of_week,max(teacher_id) teacher_id,count(*) ct from schedule group by day_of_week,class_id,teacher_id having count(*)>=2
+
+ )as r group by class_id;]]>
+    </sql>
+  </item>
+  <item>
+    <name>查询班级所有科目的周课时</name>
+    <description>防止课程安排的不正确</description>
+    <sql>
+      <![CDATA[select class_id+1 as 班级,max(学科名字) as 学科,count(学科名字) as 周课时 FROM (
+select s.*,t.学科名字 from schedule s left join teacher t on s.teacher_id=t."教师编号")
+as r  group by class_id,学科名字 order by class_id,学科名字;]]>
+    </sql>
+  </item>
+   <item>
+    <name>查询年级任课教师一览表</name>
+    <description>校对任课教师安排</description>
+    <sql>
+      <![CDATA[SELECT
+	班级+1 as 班级,
+	max(
+		CASE
+		WHEN 学科名字 = '语文' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 语文,
+	max(
+		CASE
+		WHEN 学科名字 = '数学' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 数学,
+	max(
+		CASE
+		WHEN 学科名字 = '英语' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 英语,
+	max(
+		CASE
+		WHEN 学科名字 = '物理' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 物理,
+	max(
+		CASE
+		WHEN 学科名字 = '化学' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 化学,
+	max(
+		CASE
+		WHEN 学科名字 = '生物' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 生物,
+	max(
+		CASE
+		WHEN 学科名字 = '政治' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 政治,
+	max(
+		CASE
+		WHEN 学科名字 = '历史' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 历史,
+	max(
+		CASE
+		WHEN 学科名字 = '地理' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 地理,
+	max(
+		CASE
+		WHEN 学科名字 = '体育' THEN
+			教师姓名
+		ELSE
+			''
+		END
+	) AS 体育
+	
+FROM
+	class_course
+GROUP BY
+	班级]]>
+    </sql>
+  </item>
+   <item>
+    <name>中层干部确保没有周一上午第二三四节</name>
+    <description>校对任课教师安排</description>
+    <sql>
+      <![CDATA[
+SELECT
+		--count(*) AS 节数
+   t.教师姓名
+	FROM
+		schedule s
+	LEFT JOIN teacher t ON s.teacher_id = t.教师编号
+	WHERE
+--星期几
+		s.day_of_week = 0
+--第几节课
+	AND s.section in (1,2,3)
+  and t.教师姓名 in 
+(
+	'胡香平',
+'罗才发',
+'沈阳',
+'邓建华',
+'邓大学',
+'刘海设',
+'李姣娥',
+'戴金山',
+'祝大桥',
+'肖攀东',
+'黄建平',
+'熊英平'
+)
+]]>
+    </sql>
+  </item>
+   <item>
+    <name>查询非班主任教师在周六下午的</name>
+    <description>尽量确保周六下午都是班主任的课</description>
+    <sql>
+      <![CDATA[	SELECT
+   s.class_id+1 as 班级,s.day_of_week+1 星期,s.section+1 节次,t.教师姓名
+	FROM
+		schedule s
+	inner JOIN teacher t ON s.teacher_id = t.教师编号
+	WHERE
+		s.day_of_week = 5
+	 AND s.section>3 
+ and 
+  t.教师姓名 not in (select 教师姓名 from class_course where 班主任=1)
+ and s.teacher_id<>0
+ order by 教师姓名
+
+]]>
+    </sql>
+  </item>
+   <item>
+    <name>查询周六的课不在同一个半天的教师</name>
+    <description>尽量确保周六的课在同一个半天，英语可例外。</description>
+    <sql>
+      <![CDATA[	
+SELECT 
+	r.dow+1 as 星期,
+	t.教师姓名 教师,
+	r.forenoon 上午节数,
+	r.afternoon 下午节数
+FROM
+	(
+		SELECT
+			max(day_of_week) dow,
+			max(teacher_id) ti,
+			count(forenoon) forenoon,
+			count(afternoon) afternoon
+		FROM
+			(
+				SELECT
+					day_of_week,
+					teacher_id,
+					CASE
+				WHEN section < 4 THEN
+					1
+				END AS forenoon,
+				CASE
+			WHEN section >= 4 THEN
+				1
+			END AS afternoon
+			FROM
+				schedule
+			where day_of_week=5
+	) AS s
+		GROUP BY
+			day_of_week,
+			teacher_id
+		HAVING
+			count(forenoon) > 0
+		AND count(afternoon) > 0
+	) AS r
+INNER JOIN teacher AS t ON r.ti = t."教师编号"
+
+ORDER BY
+	r.ti;
+]]>
+    </sql>
+  </item>
+ <item>
+    <name>查询信息课是否在一节安排了两个班以上同时上课</name>
+    <description>信息只有两个教室，所以保证同时上课的班级数小于等于2</description>
+    <sql>
+      <![CDATA[	
+SELECT
+	min(s.class_id) 班级,
+	max(s.day_of_week) + 1 AS 星期,
+	max(s.section) + 1 AS 节次,
+	max(t.学科名字) 学科,
+	count(*) AS 重复节数
+FROM
+	schedule AS s
+INNER JOIN teacher AS t ON s.teacher_id = t.教师编号
+GROUP BY
+	day_of_week,
+	section,
+	学科名字
+HAVING
+	count(学科名字) > 2
+AND 学科名字 = '信息'
+]]>
+    </sql>
+  </item>
+ <item>
+    <name>查询音乐课是否在一节安排了两个班以上同时上课</name>
+    <description>音乐只有两个教室，所以保证同时上课的班级数小于等于2</description>
+    <sql>
+      <![CDATA[	
+SELECT
+	min(s.class_id) 班级,
+	max(s.day_of_week) + 1 AS 星期,
+	max(s.section) + 1 AS 节次,
+	max(t.学科名字) 学科,
+	count(*) AS 重复节数
+FROM
+	schedule AS s
+INNER JOIN teacher AS t ON s.teacher_id = t.教师编号
+GROUP BY
+	day_of_week,
+	section,
+	学科名字
+HAVING
+	count(学科名字) > 2
+AND 学科名字 = '音乐'
+]]>
+    </sql>
+  </item>
+ <item>
+    <name>查询体育音乐信息是否有周六的课</name>
+    <description>体音美原则上不安排在周六</description>
+    <sql>
+      <![CDATA[	
+SELECT
+	*
+FROM
+	(
+		SELECT
+			s.class_id + 1 AS 班级,
+			s.day_of_week + 1 AS 星期,
+			s.section + 1 AS 节次,
+			t.学科名字 AS 学科
+		FROM
+			schedule AS s
+		INNER JOIN teacher AS t ON s.teacher_id = t.教师编号
+	) AS res
+WHERE
+	res.学科 IN ('体育', '音乐', '信息','公共')
+AND res.星期 = 6;
+]]>
+    </sql>
+  </item>
+ <item>
+    <name>检查周一第7节有无班主任的课</name>
+    <description>周一第7节班主任例会</description>
+    <sql>
+      <![CDATA[	
+SELECT
+	schedule.class_id,
+	schedule.day_of_week,
+	schedule.section,
+	teacher."教师姓名",
+	class_course.班主任
+FROM
+	schedule
+INNER JOIN teacher ON schedule.teacher_id = teacher.教师编号
+INNER JOIN class_course ON teacher."教师姓名" = class_course.教师姓名
+WHERE
+	day_of_week = 0
+AND section = 6
+AND 班主任 = 1;
+]]>
+    </sql>
+  </item>
+ <item>
+    <name>检查英语非班主任老师有无周六下午的课</name>
+    <description>英语要上周六早自习,所以不安排下午的课</description>
+    <sql>
+      <![CDATA[	
+SELECT
+   s.class_id+1 as 班级,s.day_of_week+1 星期,s.section+1 节次,t.教师姓名
+	FROM
+		schedule s
+	inner JOIN teacher t ON s.teacher_id = t.教师编号
+	WHERE
+		s.day_of_week = 5
+	 AND s.section>3 
+ and 
+  t.教师姓名 not in (select 教师姓名 from class_course where 班主任=1)
+ and s.teacher_id<>0 and t."学科名字"='英语'
+ order by 教师姓名
+]]>
+    </sql>
+  </item>
+  <item>
+    <name>检查非班主任老师有无周六下午的课</name>
+    <description>尽量安排班主任上周六下午的课</description>
+    <sql>
+      <![CDATA[	
+SELECT
+   s.class_id+1 as 班级,s.day_of_week+1 星期,s.section+1 节次,t.教师姓名
+	FROM
+		schedule s
+	inner JOIN teacher t ON s.teacher_id = t.教师编号
+	WHERE
+		s.day_of_week = 5
+	 AND s.section>3 
+ and 
+  t.教师姓名 not in (select 教师姓名 from class_course where 班主任=1)
+ and s.teacher_id<>0 
+ order by 教师姓名
+]]>
+    </sql>
+  </item>
+  <item>
+    <name>检查班主任老师有无周六上午的课</name>
+    <description>尽量安排班主任上周六下午的课</description>
+    <sql>
+      <![CDATA[	
+SELECT
+   s.class_id+1 as 班级,s.day_of_week+1 星期,s.section+1 节次,t.教师姓名
+	FROM
+		schedule s
+	inner JOIN teacher t ON s.teacher_id = t.教师编号
+	WHERE
+		s.day_of_week = 5
+	 AND s.section<4 
+ and 
+  t.教师姓名  in (select 教师姓名 from class_course where 班主任=1)
+ and s.teacher_id<>0 
+ order by 教师姓名
+]]>
+    </sql>
+  </item>
+</query>
